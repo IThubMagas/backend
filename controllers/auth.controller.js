@@ -374,8 +374,8 @@ class AuthController {
       const hashedPassword = await bcrypt.hash(newPassword, 10);
 
       user.password = hashedPassword;
-      user.passwordResetCode = null;
-      user.passwordResetCodeExpires = null;
+      user.passwordResetCode = undefined;
+      user.passwordResetCodeExpires = undefined;
       await user.save();
 
       const token = generateToken(user);
@@ -399,159 +399,73 @@ class AuthController {
     }
   }
 
-  async forgotPassword(req, res) {
+  // async getUsersRolesAdmin(req, res) {
+  //   try {
+  //     const adminUsers = await User.find({ roles: "admin" });
+  //     return res.status(200).json({
+  //       list: adminUsers.length,
+  //       admins: adminUsers,
+  //     });
+  //   } catch (error) {
+  //     return res
+  //       .status(500)
+  //       .json({ message: "Ошибка получения пользователей с ролью admin" });
+  //   }
+  // }
+
+  async getUsers(req, res) {
     try {
-      const { email } = req.body;
+      const userRoles = req.user.roles;
+      const page = Math.max(1, parseInt(req.query.page) || 1);
+      const limit = Math.min(Math.max(1, parseInt(req.query.limit) || 10), 100);
+      const skip = (page - 1) * limit;
 
-      if(!email) {
-        return res.status(400).json({ message: "Поля email обязательно" })
+      let filter = {};
+      if (userRoles.includes("admin")) {
+        if (req.query.role) {
+          filter.roles = req.query.role;
+        }
+      } else {
+        filter.roles = "student";
       }
 
-      const user = await User.findOne({ email });
-      if (!user) {
-        return res.status(404).json({ message: "Пользователь не найден" });
-      }
+      const [ users, total ] = await Promise.all([
+        User.find(filter).skip(skip).limit(limit),
+        User.countDocuments(filter)
+      ]);
 
-      const resetCode = crypto.randomInt(100000, 999999).toString();
-      const resetExpires = new Date(Date.now() + 10 * 60 * 1000);
-
-      user.passwordResetCode = resetCode;
-      user.passwordResetCodeExpires = resetExpires;
-
-      await user.save();
-      await transporter.sendMail({
-        from: "Frontend-Hub <amoshal1997@gmail.com>",
-        to: email,
-        subject: "Восстановление пароля",
-        html: `
-          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-            <h2 style="color: #333;">Восстановление пароля</h2>
-            <p>Для сброса пароля используйте следующий код:</p>
-            <p style="text-align: center; margin: 30px 0;">
-              <strong style="font-size: 24px; color: #007bff; letter-spacing: 2px;">${resetCode}</strong>
-            </p>
-            <p>Код действителен в течение 10 минут.</p>
-            <p style="color: #ff0000; font-size: 14px;">Если вы не запрашивали сброс пароля, проигнорируйте это письмо.</p>
-            <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
-            <p style="color: #666; font-size: 12px;">С уважением,<br>Команда Frontend-Hub</p>
-          </div>
-        `,
-      });
+      const totalPages = Math.ceil(total / limit);
 
       return res.status(200).json({
-        message: "Код восстановления пароля отправлен на вашу почту",
+        users: users,
+        pagination: {
+          currentPage: page,
+          totalPages: totalPages,
+          totalItems: total,
+          itemsPerPage: limit,
+          hasNext: page < totalPages,
+          hasPrev: page > 1
+        }
       });
+
     } catch (error) {
-      res.status(500).json({ message: "Ошибка при запросе восстановления пароля" })
-      console.log(error);
+      return res.status(500).json({ message: "Ошибка при получении списка пользователей" });
     }
   }
 
-  async resetPassword(req, res) {
-    try {
-      const { email, resetCode, newPassword } = req.body;
-      const missingFields = []
-
-      if (!email) missingFields.push('email')
-      if (!resetCode) missingFields.push('resetCode') 
-      if (!newPassword) missingFields.push('newPassword')
-
-      if (missingFields.length > 0) {
-        return res.status(400).json({ message: `Не заполнены обязательные поля: ${missingFields.join(', ')}` })
-      }
-
-      if (newPassword.length < 6) {
-        return res.status(400).json({ message: "Пароль должен быть не менее 6 символов" });
-      }
-
-      if (!/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(newPassword)) {
-        return res.status(400).json({ message: "Пароль должен содержать хотя бы одну заглавную букву, одну строчную и одну цифру" });
-      }
-
-      const user = await User.findOne({ email });
-      if (!user) {
-        return res.status(404).json({ message: "Пользователь не найден" });
-      }
-
-      if (!user.passwordResetCode || !user.passwordResetCodeExpires) {
-        return res.status(400).json({ message: "Код не найден или устарел" });
-      }
-
-      if (user.passwordResetCode !== resetCode) {
-        return res.status(400).json({ message: "Неверный код подтверждения сброса пароля" });
-      }
-
-      if (new Date() > user.passwordResetCodeExpires) {
-        return res.status(400).json({ message: "Срок действия кода для сброса пароля истек" });
-      }
-
-      const hashedPassword = await bcrypt.hash(newPassword, 10)
-
-      user.password = hashedPassword
-      user.passwordResetCode = null;
-      user.passwordResetCodeExpires = null;
-      await user.save();
-
-      const token = generateToken(user);
-
-      return res.status(200).json({
-        message: "Пароль успешно сброшен!",
-        token,
-        user: {
-          id: user._id,
-          email: user.email,
-          firstName: user.firstName,
-          lastName: user.lastName,
-          isEmailVerified: user.isEmailVerified,
-        },
-      });
-    } catch (error) {
-      res.status(500).json({ message: "Ошибка при попытке сброса пароля" })
-      console.log(error);
-    }
-  }
-
-  async getUsersRolesAdmin(req, res) {
-    try {
-      const adminUsers = await User.find({ roles: "admin" });
-      return res.status(200).json({
-        list: adminUsers.length,
-        admins: adminUsers,
-      });
-    } catch (error) {
-      return res
-        .status(500)
-        .json({ message: "Ошибка получения пользователей с ролью admin" });
-    }
-  }
-
-  async getUsersRolesUser(req, res) {
-    try {
-      const userUsers = await User.find({ roles: "user" });
-      return res.status(200).json({
-        list: userUsers.length,
-        users: userUsers,
-      });
-    } catch (error) {
-      return res
-        .status(500)
-        .json({ message: "Ошибка получения пользователей с ролью user" });
-    }
-  }
-
-  async getUsersRolesStudent(req, res) {
-    try {
-      const studentUsers = await User.find({ roles: "student" });
-      return res.status(200).json({
-        list: studentUsers.length,
-        students: studentUsers,
-      });
-    } catch (error) {
-      return res
-        .status(500)
-        .json({ message: "Ошибка получения пользователей с ролью student" });
-    }
-  }
+  // async getUsersRolesStudent(req, res) {
+  //   try {
+  //     const studentUsers = await User.find({ roles: "student" });
+  //     return res.status(200).json({
+  //       list: studentUsers.length,
+  //       students: studentUsers,
+  //     });
+  //   } catch (error) {
+  //     return res
+  //       .status(500)
+  //       .json({ message: "Ошибка получения пользователей с ролью student" });
+  //   }
+  // }
 
   async getUserProfile(req, res) {
     try {

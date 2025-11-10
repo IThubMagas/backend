@@ -27,16 +27,16 @@ authRouter.post("/reset-password", authController.resetPassword);
 authRouter.put("/change-password", authMiddleware, authController.changePassword);
 authRouter.put("/change-email", authMiddleware, authController.changeEmail);
 authRouter.get("/profile", authMiddleware, authController.getUserProfile);
-authRouter.get(
-  "/role/admin",
-  authMiddleware,
-  authController.getUsersRolesAdmin
-);
-authRouter.get("/role/user", authMiddleware, authController.getUsersRolesUser);
-authRouter.get(
-  "/role/student",
-  authMiddleware,
-  authController.getUsersRolesStudent
-);
+// authRouter.get(
+//   "/role/admin",
+//   authMiddleware,
+//   authController.getUsersRolesAdmin
+// );
+authRouter.get("/users", authMiddleware, authController.getUsers);
+// authRouter.get(
+//   "/role/student",
+//   authMiddleware,
+//   authController.getUsersRolesStudent
+// );
 
 export default authRouter;

@@ -15,8 +15,8 @@ const UserSchema = new Schema(
     isEmailVerified: {type:Boolean, default: false},
     emailVerificationCode: {type: String, default: null},
     emailVerificationCodeExpires: {type: Date, default: null},
-    passwordResetCode: { type: String, default: null },
-    passwordResetCodeExpires: { type: Date, default: null },
+    passwordResetCode: { type: String, default: undefined },
+    passwordResetCodeExpires: { type: Date, default: undefined },
   },
   { timestamps: true }
 );
