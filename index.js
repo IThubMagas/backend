@@ -11,7 +11,8 @@ app.use(express.json());
 app.use("/auth", authRouter);
 app.use('/uploads', express.static('uploads'));
 app.use(cors({
-    origin: "*"
+  origin: "http://localhost:5173",
+  withCredentials: true, 
 }));
 
 const PORT = process.env.PORT || 5000;
