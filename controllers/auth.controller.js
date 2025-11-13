@@ -483,6 +483,94 @@ class AuthController {
     }
   }
 
+  async editProfile(req, res){
+    try {
+      const {id} = req.user;
+      const {userData} = req.body
+      const user = await User.findById(id)
+      if (!user) {
+        return res.status(400).json({ message: "Нет пользователя" }) 
+      }
+      console.log(userData, "dwadwadwadwadwwddwaaddwad");
+      
+      await User.findByIdAndUpdate(id, userData)
+
+      return res.status(200).json({message: "Успешно"})
+
+    } catch (error) {
+      console.log("Ошибка при изменении профиля", error);
+      res.status(500).json({message:"Ошибка при изменении профиля"})
+    } 
+  }
+
+  async uploadAvatar(req, res) {
+    try {
+        const { id } = req.user;
+        
+        if (!req.file) {
+            return res.status(400).json({ message: "Файл не загружен" });
+        }
+
+        const user = await User.findById(id);
+        if (!user) {
+            fs.unlinkSync(req.file.path);
+            return res.status(404).json({ message: "Пользователь не найден" });
+        }
+
+        if (user.avatar) {
+            const oldAvatarPath = path.join('uploads/avatars/', user.avatar);
+            if (fs.existsSync(oldAvatarPath)) {
+                fs.unlinkSync(oldAvatarPath);
+            }
+        }
+
+        user.avatar = req.file.filename;
+        await user.save();
+
+        return res.status(200).json({
+            message: "Аватар успешно загружен",
+            avatar: user.avatar
+        });
+    } catch (error) {
+        console.error("Upload avatar error:", error);
+        if (req.file) {
+            fs.unlinkSync(req.file.path);
+        }
+        return res.status(500).json({ message: "Ошибка при загрузке аватара" });
+    }
+}
+
+  async deleteAvatar(req, res) {
+    try {
+        const { id } = req.user;
+
+        const user = await User.findById(id);
+        if (!user) {
+            return res.status(404).json({ message: "Пользователь не найден" });
+        }
+
+        if (!user.avatar) {
+            return res.status(400).json({ message: "Аватар не найден" });
+        }
+
+        const avatarPath = path.join('uploads/avatars/', user.avatar);
+        if (fs.existsSync(avatarPath)) {
+            fs.unlinkSync(avatarPath);
+        }
+
+        user.avatar = '';
+        await user.save();
+
+        return res.status(200).json({
+            success: true,
+            message: "Аватар успешно удален"
+        });
+    } catch (error) {
+        console.error("Delete avatar error:", error);
+        return res.status(500).json({ message: "Ошибка при удалении аватара" });
+    }
+}
+
   async changeEmail(req, res) {
     try {
       const { id } = req.user;
