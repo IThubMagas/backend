@@ -11,7 +11,8 @@ export async function getResumes(req, res){
         }
 
         if(industry) {
-            filter.industry = industry
+            const industies = industry.split(',').map(ind => ind.trim())
+            filter.industry = { $in: industies }
         }
         if(workFormat) {
             filter.workFormat = workFormat
@@ -48,22 +49,15 @@ export async function getResumes(req, res){
 
 export async function getResumesCount(req, res) {
     try {
-        const { industry, workFormat, employmentType, status } = req.query
+        const { status } = req.query
         const filter = {
             isPublic: true
         }
 
-        if(industry) {
-            filter.industry = industry
-        }
-        if(workFormat) {
-            filter.workFormat = workFormat
-        }
-        if(employmentType) {
-            filter.employmentType = employmentType
-        }
         if(status) {
             filter.status = status
+        } else {
+            return res.status(400).json({ message: "Статус обязателен для подсчета резюме" })
         }
 
         const resumesCount = await Resume.countDocuments(filter)
