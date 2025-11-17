@@ -82,6 +82,26 @@ export const createResumeValidation = [
             
             return true;
         }),
+    body("industry")
+        .notEmpty()
+        .withMessage("Отрасль обязательна")
+        .isIn([ "Web Development", "Programming", "Digital Design", "Game Development", "Information Security", "Digital Marketing" ])
+        .withMessage("Недопустимая отрасль"),
+    body("workFormat")
+        .notEmpty()
+        .withMessage("Формат работы обязателен")
+        .isIn([ "On-site", "Remote", "Hybrid" ])
+        .withMessage("Недопустимый тип работы"),
+    body("employmentType")
+        .notEmpty()
+        .withMessage("Тип занятости обязателен")
+        .isIn([ "Intern", "Volunteer", "Full-time", "Part-time" ])
+        .withMessage("Недопустимый тип занятости"),
+    body("status")
+        .notEmpty()
+        .withMessage("Статус обязателен")
+        .isIn([ "Not looking", "Open to offers", "Actively searching" ])
+        .withMessage("Недопустимый статус"),
     body("languages")
         .isArray()
         .withMessage("Языки должны быть массивом")
@@ -187,6 +207,22 @@ export const updateResumeValidation = [
             
             return true;
         }),
+    body("industry")
+        .optional()
+        .isIn([ "Web Development", "Programming", "Digital Design", "Game Development", "Information Security", "Digital Marketing" ])
+        .withMessage("Недопустимая отрасль"),
+    body("workFormat")
+        .optional()
+        .isIn([ "On-site", "Remote", "Hybrid" ])
+        .withMessage("Недопустимый тип работы"),
+    body("employmentType")
+        .optional()
+        .isIn([ "Intern", "Volunteer", "Full-time", "Part-time" ])
+        .withMessage("Недопустимый тип занятости"),
+    body("status")
+        .optional()
+        .isIn([ "Not looking", "Open to offers", "Actively searching" ])
+        .withMessage("Недопустимый статус"),
     body("languages")
         .optional()
         .isArray()
