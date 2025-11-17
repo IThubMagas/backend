@@ -9,14 +9,15 @@ import dotenv from "dotenv";
 const app = express();
 dotenv.config();
 
+app.use(cors({
+    origin: "http://localhost:5173",
+    credentials: true
+}));
 app.use(express.json());
 app.use("/auth", authRouter);
 app.use("/resume", resumeRouter);
 app.use("/project", projectRouter);
 app.use('/uploads', express.static('uploads'));
-app.use(cors({
-    origin: "*"
-}));
 
 const PORT = process.env.PORT || 5000;
 

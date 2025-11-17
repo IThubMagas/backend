@@ -33,7 +33,23 @@ const ResumeSchema = new Schema({
     education: [ EducationSchema ],
     skills: [{ type: String }],
     languages: [ LanguageSchema ],
-    isPublic: { type: Boolean, default: true }
+    isPublic: { type: Boolean, default: true },
+    industry: {
+      type: String,
+      enum: ["Web Development", "Programming", "Digital Design", "Game Development", "Information Security", "Digital Marketing"]
+    },
+    workFormat: {
+      type: String,
+      enum: ["On-site", "Remote", "Hybrid"]
+    },
+    employmentType: {
+      type: String,
+      enum: ["Intern", "Volunteer", "Full-time", "Part-time"]
+    },
+    status: {
+      type: String,
+      enum: ["Not looking", "Open to offers", "Actively searching"]
+    }
   },
   { timestamps: true }
 );
