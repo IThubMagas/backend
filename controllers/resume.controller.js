@@ -2,9 +2,45 @@ import Resume from "../models/Resume.model.js";
 
 export async function getResumes(req, res){
     try {
-        const resumes = await Resume.find();
+        const { industry, workFormat, employmentType, status } = req.query
+        const page = Math.max(1, parseInt(req.query.page) || 1);
+        const limit = Math.min(Math.max(1, parseInt(req.query.limit) || 10), 100);
+        const skip = (page - 1) * limit;
+        const filter = {
+            isPublic: true
+        }
 
-        res.status(200).json({ resumes });
+        if(industry) {
+            const industies = industry.split(',').map(ind => ind.trim())
+            filter.industry = { $in: industies }
+        }
+        if(workFormat) {
+            filter.workFormat = workFormat
+        }
+        if(employmentType) {
+            filter.employmentType = employmentType
+        }
+        if(status) {
+            filter.status = status
+        }
+
+        const [ resumes, total ] = await Promise.all([
+            Resume.find(filter).skip(skip).limit(limit).populate('user', 'firstName lastName patronymic avatar phoneNumber'),
+            Resume.countDocuments(filter)
+        ]);
+
+        const totalPages = Math.ceil(total / limit)
+        res.status(200).json({ 
+            resumes,
+            pagination: {
+                currentPage: page,
+                totalPages: totalPages,
+                totalItems: total,
+                itemsPerPage: limit,
+                hasNext: page < totalPages,
+                hasPrev: page > 1
+            }
+        });
     } catch (error) {
         res.status(500).json({ message: "Не удалось получить список резюме" });
         console.error(error);
@@ -24,6 +60,27 @@ export async function getResume(req, res){
         res.status(200).json({ resume });
     } catch (error) {
         res.status(500).json({ message: "Не удалось получить резюме" });
+        console.error(error);
+    }
+}
+
+export async function getResumesCount(req, res) {
+    try {
+        const { status } = req.query
+        const filter = {
+            isPublic: true
+        }
+
+        if(status) {
+            filter.status = status
+        } else {
+            return res.status(400).json({ message: "Статус обязателен для подсчета резюме" })
+        }
+
+        const resumesCount = await Resume.countDocuments(filter)
+        res.status(200).json({ resumesCount })
+    } catch (error) {
+        res.status(500).json({ message: "Ошибка при подсчете резюме" });
         console.error(error);
     }
 }
