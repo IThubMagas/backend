@@ -430,7 +430,7 @@ class AuthController {
       }
 
       const [ users, total ] = await Promise.all([
-        User.find(filter).skip(skip).limit(limit),
+        User.find(filter).skip(skip).limit(limit).select('firstName lastName patronymic avatar phoneNumber'),
         User.countDocuments(filter)
       ]);
 
