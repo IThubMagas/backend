@@ -33,8 +33,6 @@ const ResumeSchema = new Schema({
   title: { type: String, required: true },
   description: { type: String, required: true },
   contacts: {
-    email: { type: String, required: true },
-    phone: { type: String },
     linkedin: { type: String },
     github: { type: String }
   },
@@ -48,7 +46,7 @@ const ResumeSchema = new Schema({
   },
   workFormat: {
     type: String,
-    enum: [ "On-site", "Remote", "Hybrid" ]
+    enum: [ "On-site", "Remote", "Hybrid" ] 
   },
   employmentType: {
     type: String,

@@ -7,7 +7,7 @@ const UserSchema = new Schema(
     patronymic: { type: String, required: true },
     email: { type: String, unique: true, required: true },
     password: { type: String, required: true },
-    phoneNumber: { type: Number, unique: true },
+    phoneNumber: { type: String, unique: true },
     avatar: { type: String },
     roles: { type: [String], default: ["student"] }, //admin or user
     project: {type: [String], default: []},

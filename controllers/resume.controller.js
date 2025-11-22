@@ -1,4 +1,5 @@
 import Resume from "../models/Resume.model.js";
+import User from "../models/User.model.js";
 
 export async function getResumes(req, res){
     try {
@@ -72,7 +73,7 @@ export async function getResume(req, res){
     try {
         const { resumeId } = req.params;
         const resume = await Resume.findById(resumeId)
-            .populate("user", "avatar firstName lastName age");
+            .populate("user", "avatar firstName lastName age phoneNumber email");
 
         if(!resume){
             return res.status(404).json({ message: "Резюме не найдено" });
@@ -138,6 +139,11 @@ export async function updateResume(req, res){
             resumeId,
             { $set: data }
         );
+
+        await User.findByIdAndUpdate(
+            data.user._id,
+            { $set: data.user }
+        )
 
         res.status(200).json({ message: "Резюме успешно обновлено" });
     } catch (error) {

@@ -20,6 +20,25 @@ const checkPhoneUnique = async (phoneNumber) => {
   return true;
 };
 
+const validatePhoneFormat = (value) => {
+  if (!value) return true;
+
+  const cleanPhone = value.replace(/\D/g, '');
+
+  if (cleanPhone.startsWith('7') || cleanPhone.startsWith('8')) {
+    if (cleanPhone.length !== 11) {
+      throw new Error('Номер должен содержать 11 цифр');
+    }
+    return true;
+  }
+
+  if (cleanPhone.length < 10 || cleanPhone.length > 15) {
+    throw new Error('Номер должен содержать от 10 до 15 цифр');
+  }
+
+  return true;
+};
+
 export const validateRegistration = [
   body('firstName')
     .trim()
@@ -62,13 +81,11 @@ export const validateRegistration = [
 
   body('phoneNumber')
     .optional()
-    .isMobilePhone('any')
-    .withMessage('Введите корректный номер телефона')
+    .custom(validatePhoneFormat)
     .custom(checkPhoneUnique),
 
   handleValidationErrors
 ];
-
 
 export const validateLogin = [
   body('email')
@@ -86,15 +103,4 @@ export const validateLogin = [
     .withMessage('Пароль обязателен'),
 
   handleValidationErrors
-]
-
-
-
-
-
-
-
-
-
-
-
+];

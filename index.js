@@ -19,7 +19,7 @@ app.use("/resume", resumeRouter);
 app.use("/project", projectRouter);
 app.use('/uploads', express.static('uploads'));
 
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 3000;
 
 app.get('/', (req, res) => {
     res.status(200).json({message:"worked"});

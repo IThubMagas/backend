@@ -44,10 +44,10 @@ npm run dev
 npm start
 ```
 
-Сервер по умолчанию стартует на `PORT` из `.env` или `5000`. Папка `uploads/` отдается статически по пути `/uploads`.
+Сервер по умолчанию стартует на `PORT` из `.env` или `3000`. Папка `uploads/` отдается статически по пути `/uploads`.
 
 ### Переменные окружения (.env)
-- `PORT` — порт HTTP-сервера (необязательно, по умолчанию 5000)
+- `PORT` — порт HTTP-сервера (необязательно, по умолчанию 3000)
 - `MONGODB_CONNECT` — строка подключения к MongoDB (например, `mongodb://localhost:27017/your-db`)
 - `JWT_SECRET` — секрет для подписи JWT
 - `JWT_EXPIRES_IN` — время жизни токена (например, `1d`, `12h`, `3600s`)
@@ -202,7 +202,7 @@ router.get('/profile', requireAuth, (req, res) => {
 
 Регистрация (cURL):
 ```bash
-curl -X POST http://localhost:5000/auth/registration \
+curl -X POST http://localhost:3000/auth/registration \
   -H "Content-Type: multipart/form-data" \
   -F firstName=Ivan \
   -F lastName=Ivanov \
@@ -215,7 +215,7 @@ curl -X POST http://localhost:5000/auth/registration \
 
 Список админов:
 ```bash
-curl http://localhost:5000/auth/role/admin
+curl http://localhost:3000/auth/role/admin
 ```
 
 ### Частые ошибки и их причины
