@@ -4,7 +4,16 @@ const WorkExperienceSchema = new Schema({
   title: { type: String, required: true },
   company: { type: String, required: true },
   period: { type: String, required: true },
-  achievements: { type: String },
+  achievements: { type: String }
+}, { _id: false });
+
+const ProjectSchema = new Schema({
+  title: { type: String, required: true },
+  description: { type: String, required: true },
+  image: { type: String, required: true },
+  codeUrl: { type: String, required: true },
+  demoUrl: { type: String }
+  // contributors: [{ type: Schema.ObjectId }]
 }, { _id: false });
 
 const EducationSchema = new Schema({
@@ -29,7 +38,7 @@ const UserSchema = new Schema(
     phoneNumber: { type: String, unique: true },
     avatar: { type: String },
     roles: { type: [String], default: ["student"] },
-    project: { type: [String], default: [] },
+    projects: [ ProjectSchema ],
     contacts: {
       linkedin: { type: String },
       telegram: { type: String },
