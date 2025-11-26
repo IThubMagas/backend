@@ -1,176 +1,176 @@
-import Resume from "../models/Resume.model.js";
-import User from "../models/User.model.js";
+// import Resume from "../models/Resume.model.js";
+// import User from "../models/User.model.js";
 
-export async function getResumes(req, res){
-    try {
-        const { industry, workFormat, employmentType, status } = req.query
-        const page = Math.max(1, parseInt(req.query.page) || 1);
-        const limit = Math.min(Math.max(1, parseInt(req.query.limit) || 10), 100);
-        const skip = (page - 1) * limit;
-        const filter = {
-            isPublic: true
-        }
+// export async function getResumes(req, res){
+//     try {
+//         const { industry, workFormat, employmentType, status } = req.query
+//         const page = Math.max(1, parseInt(req.query.page) || 1);
+//         const limit = Math.min(Math.max(1, parseInt(req.query.limit) || 10), 100);
+//         const skip = (page - 1) * limit;
+//         const filter = {
+//             isPublic: true
+//         }
 
-        if(industry) {
-            const industies = industry.split(',').map(ind => ind.trim())
-            filter.industry = { $in: industies }
-        }
-        if(workFormat) {
-            filter.workFormat = workFormat
-        }
-        if(employmentType) {
-            filter.employmentType = employmentType
-        }
-        if(status) {
-            filter.status = status
-        }
+//         if(industry) {
+//             const industies = industry.split(',').map(ind => ind.trim())
+//             filter.industry = { $in: industies }
+//         }
+//         if(workFormat) {
+//             filter.workFormat = workFormat
+//         }
+//         if(employmentType) {
+//             filter.employmentType = employmentType
+//         }
+//         if(status) {
+//             filter.status = status
+//         }
 
-        const [ resumes, total ] = await Promise.all([
-            Resume.find(filter).skip(skip).limit(limit).populate('user', 'firstName lastName patronymic avatar phoneNumber'),
-            Resume.countDocuments(filter)
-        ]);
+//         const [ resumes, total ] = await Promise.all([
+//             Resume.find(filter).skip(skip).limit(limit).populate('user', 'firstName lastName patronymic avatar phoneNumber'),
+//             Resume.countDocuments(filter)
+//         ]);
 
-        const totalPages = Math.ceil(total / limit)
-        res.status(200).json({ 
-            resumes,
-            pagination: {
-                currentPage: page,
-                totalPages: totalPages,
-                totalItems: total,
-                itemsPerPage: limit,
-                hasNext: page < totalPages,
-                hasPrev: page > 1
-            }
-        });
-    } catch (error) {
-        res.status(500).json({ message: "Не удалось получить список резюме" });
-        console.error(error);
-    }
-}
+//         const totalPages = Math.ceil(total / limit)
+//         res.status(200).json({ 
+//             resumes,
+//             pagination: {
+//                 currentPage: page,
+//                 totalPages: totalPages,
+//                 totalItems: total,
+//                 itemsPerPage: limit,
+//                 hasNext: page < totalPages,
+//                 hasPrev: page > 1
+//             }
+//         });
+//     } catch (error) {
+//         res.status(500).json({ message: "Не удалось получить список резюме" });
+//         console.error(error);
+//     }
+// }
 
-export async function getResumesCount(req, res) {
-    try {
-        const { status } = req.query
-        const filter = {
-            isPublic: true
-        }
+// export async function getResumesCount(req, res) {
+//     try {
+//         const { status } = req.query
+//         const filter = {
+//             isPublic: true
+//         }
 
-        if(status) {
-            filter.status = status
-        } else {
-            return res.status(400).json({ message: "Статус обязателен для подсчета резюме" })
-        }
+//         if(status) {
+//             filter.status = status
+//         } else {
+//             return res.status(400).json({ message: "Статус обязателен для подсчета резюме" })
+//         }
 
-        const resumesCount = await Resume.countDocuments(filter)
-        res.status(200).json(resumesCount)
-    } catch (error) {
-        res.status(500).json({ message: "Ошибка при подсчете резюме" });
-        console.error(error);
-    }
-}
+//         const resumesCount = await Resume.countDocuments(filter)
+//         res.status(200).json(resumesCount)
+//     } catch (error) {
+//         res.status(500).json({ message: "Ошибка при подсчете резюме" });
+//         console.error(error);
+//     }
+// }
 
-export async function getResume(req, res){
-    try {
-        const { resumeId } = req.params;
-        const resume = await Resume.findById(resumeId)
-            .populate("user", "avatar firstName lastName age phoneNumber email");
+// export async function getResume(req, res){
+//     try {
+//         const { resumeId } = req.params;
+//         const resume = await Resume.findById(resumeId)
+//             .populate("user", "avatar firstName lastName age phoneNumber email");
 
-        if(!resume){
-            return res.status(404).json({ message: "Резюме не найдено" });
-        }
+//         if(!resume){
+//             return res.status(404).json({ message: "Резюме не найдено" });
+//         }
 
-        res.status(200).json({ resume });
-    } catch (error) {
-        res.status(500).json({ message: "Не удалось получить резюме" });
-        console.error(error);
-    }
-}
+//         res.status(200).json({ resume });
+//     } catch (error) {
+//         res.status(500).json({ message: "Не удалось получить резюме" });
+//         console.error(error);
+//     }
+// }
 
-export async function createResume(req, res){
-    try {
-        const { id } = req.user;
-        const{
-            title,
-            description,
-            contacts,
-            workExperience,
-            education,
-            skills,
-            languages
-        } = req.body;
+// export async function createResume(req, res){
+//     try {
+//         const { id } = req.user;
+//         const{
+//             title,
+//             description,
+//             contacts,
+//             workExperience,
+//             education,
+//             skills,
+//             languages
+//         } = req.body;
 
-        await Resume.create({
-            user: id,
-            title,
-            description,
-            contacts,
-            workExperience,
-            education,
-            skills,
-            languages
-        });
+//         await Resume.create({
+//             user: id,
+//             title,
+//             description,
+//             contacts,
+//             workExperience,
+//             education,
+//             skills,
+//             languages
+//         });
         
-        res.status(200).json({ message: "Резюме успешно добавлено" });
-    } catch (error) {
-        res.status(500).json({ message: "Не удалось создать резюме" });
-        console.error(error);
-    }
-}
+//         res.status(200).json({ message: "Резюме успешно добавлено" });
+//     } catch (error) {
+//         res.status(500).json({ message: "Не удалось создать резюме" });
+//         console.error(error);
+//     }
+// }
 
-export async function updateResume(req, res){
-    try {
-        const { id } = req.user;
-        const { resumeId } = req.params;
-        const data = req.body;
+// export async function updateResume(req, res){
+//     try {
+//         const { id } = req.user;
+//         const { resumeId } = req.params;
+//         const data = req.body;
 
-        const resume = await Resume.findById(resumeId);
+//         const resume = await Resume.findById(resumeId);
 
-        if(!resume){
-            return res.status(404).json({ message: "Резюме не найдено" });
-        }
+//         if(!resume){
+//             return res.status(404).json({ message: "Резюме не найдено" });
+//         }
 
-        if(id !== resume.user.toString()){
-            console.log(id, resume.user);
+//         if(id !== resume.user.toString()){
+//             console.log(id, resume.user);
             
-            return res.status(403).json({ message: "У вас нет доступа" });
-        }
+//             return res.status(403).json({ message: "У вас нет доступа" });
+//         }
 
-        await Resume.findByIdAndUpdate(
-            resumeId,
-            { $set: data }
-        );
+//         await Resume.findByIdAndUpdate(
+//             resumeId,
+//             { $set: data }
+//         );
 
-        await User.findByIdAndUpdate(
-            data.user._id,
-            { $set: data.user }
-        )
+//         await User.findByIdAndUpdate(
+//             data.user._id,
+//             { $set: data.user }
+//         )
 
-        res.status(200).json({ message: "Резюме успешно обновлено" });
-    } catch (error) {
-        res.status(500).json({ message: "Не удалось обновить резюме" });
-        console.error(error);
-    }
-}
+//         res.status(200).json({ message: "Резюме успешно обновлено" });
+//     } catch (error) {
+//         res.status(500).json({ message: "Не удалось обновить резюме" });
+//         console.error(error);
+//     }
+// }
 
-export async function deleteResume(req, res){
-    try {
-        const { id } = req.user;
-        const { resumeId } = req.params;
-        const resume = await Resume.findById(resumeId);
+// export async function deleteResume(req, res){
+//     try {
+//         const { id } = req.user;
+//         const { resumeId } = req.params;
+//         const resume = await Resume.findById(resumeId);
 
-        if(!resume){
-            return res.status(404).json({ message: "Резюме не найдено" });
-        }
+//         if(!resume){
+//             return res.status(404).json({ message: "Резюме не найдено" });
+//         }
 
-        if(id !== resume.user.toString()){
-            return res.status(403).json({ message: "У вас нет доступа" });
-        }
+//         if(id !== resume.user.toString()){
+//             return res.status(403).json({ message: "У вас нет доступа" });
+//         }
 
-        await resume.deleteOne();
+//         await resume.deleteOne();
 
-        res.status(200).json({ message: "Резюме успешно удалено" });
-    } catch (error) {
-        res.status(500).json({ message: "Не удалось удалить резюме" });
-        console.error(error);
-    }
-}
+//         res.status(200).json({ message: "Резюме успешно удалено" });
+//     } catch (error) {
+//         res.status(500).json({ message: "Не удалось удалить резюме" });
+//         console.error(error);
+//     }
+// }
