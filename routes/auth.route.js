@@ -27,7 +27,7 @@ authRouter.post("/reset-password", authController.resetPassword);
 
 authRouter.put("/change-password", authMiddleware, authController.changePassword);
 authRouter.put("/change-email", authMiddleware, authController.changeEmail);
-authRouter.get("/profile", authMiddleware, userController.getUserProfile);
+authRouter.get("/profile", authMiddleware, userController.getUser);
 // authRouter.get(
 //   "/role/admin",
 //   authMiddleware,
