@@ -413,45 +413,7 @@ class AuthController {
   //   }
   // }
 
-  async getUsers(req, res) {
-    try {
-      const userRoles = req.user.roles;
-      const page = Math.max(1, parseInt(req.query.page) || 1);
-      const limit = Math.min(Math.max(1, parseInt(req.query.limit) || 10), 100);
-      const skip = (page - 1) * limit;
 
-      let filter = {};
-      if (userRoles.includes("admin")) {
-        if (req.query.role) {
-          filter.roles = req.query.role;
-        }
-      } else {
-        filter.roles = "student";
-      }
-
-      const [ users, total ] = await Promise.all([
-        User.find(filter).skip(skip).limit(limit).select('firstName lastName patronymic avatar phoneNumber'),
-        User.countDocuments(filter)
-      ]);
-
-      const totalPages = Math.ceil(total / limit);
-
-      return res.status(200).json({
-        users: users,
-        pagination: {
-          currentPage: page,
-          totalPages: totalPages,
-          totalItems: total,
-          itemsPerPage: limit,
-          hasNext: page < totalPages,
-          hasPrev: page > 1
-        }
-      });
-
-    } catch (error) {
-      return res.status(500).json({ message: "Ошибка при получении списка пользователей" });
-    }
-  }
 
   // async getUsersRolesStudent(req, res) {
   //   try {
@@ -467,21 +429,6 @@ class AuthController {
   //   }
   // }
 
-  async getUserProfile(req, res) {
-    try {
-      const { id } = req.user;
-
-      const usersProfile = await User.findById(id);
-      if (!usersProfile) {
-        return res.status(404).json({ message: "Пользователь не найден" });
-      }
-      return res.status(200).json({
-        students: usersProfile,
-      });
-    } catch (error) {
-      return res.status(500).json("Не удалось найти");
-    }
-  }
 
   async changeEmail(req, res) {
     try {
