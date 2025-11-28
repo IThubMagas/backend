@@ -8,13 +8,19 @@ const WorkExperienceSchema = new Schema({
 }, { _id: false });
 
 const ProjectSchema = new Schema({
-  title: { type: String, required: true },
+  link: { type: String, required: true },
   description: { type: String, required: true },
-  image: { type: String, required: true },
-  codeUrl: { type: String, required: true },
-  demoUrl: { type: String }
-  // contributors: [{ type: Schema.ObjectId }]
 }, { _id: false });
+
+const SocialSchema = new Schema({
+  social: { type: String, required: true },
+  link: { type: String, required: true },
+}, { _id: false });
+
+const AchievementsSchema = new Schema({
+  text: { type: String, required: true },
+  file: { type: String, required: true }
+}, { _id: false })
 
 const EducationSchema = new Schema({
   degree: { type: String, required: true },
@@ -36,14 +42,19 @@ const UserSchema = new Schema(
     email: { type: String, unique: true, required: true },
     password: { type: String, required: true },
     phoneNumber: { type: String, unique: true },
+    age: { type: Number, min: 0, max: 100 },
+    city: { type: String },
     avatar: { type: String },
     roles: { type: [String], default: ["student"] },
-    projects: [ ProjectSchema ],
     contacts: {
       linkedin: { type: String },
       telegram: { type: String },
       github: { type: String },
     },
+    projects: [ ProjectSchema ],
+    socials: [ SocialSchema ],
+    about: { type: String, maxlength: 1000 },
+    achievements: [ AchievementsSchema ],
     workExperience: [ WorkExperienceSchema ],
     education: [ EducationSchema ],
     skills: [{ type: String }],
@@ -68,8 +79,8 @@ const UserSchema = new Schema(
     isEmailVerified: { type:Boolean, default: false },
     emailVerificationCode: { type: String, default: null },
     emailVerificationCodeExpires: { type: Date, default: null },
-    passwordResetCode: { type: String, default: undefined },
-    passwordResetCodeExpires: { type: Date, default: undefined },
+    passwordResetCode: { type: String, default: null },
+    passwordResetCodeExpires: { type: Date, default: null },
   },
   { timestamps: true }
 );
