@@ -1,7 +1,7 @@
 import express from "express";
 import mongoose from "mongoose";
 import authRouter from "./routes/auth.route.js";
-// import resumeRouter from "./routes/resume.route.js";
+import userRouter from "./routes/user.route.js";
 import projectRouter from "./routes/project.route.js";
 import cors from "cors";
 import dotenv from "dotenv";
@@ -15,7 +15,7 @@ app.use(cors({
 }));
 app.use(express.json());
 app.use("/auth", authRouter);
-// app.use("/resume", resumeRouter);
+app.use("/user", userRouter);
 app.use("/project", projectRouter);
 app.use('/uploads', express.static('uploads'));
 

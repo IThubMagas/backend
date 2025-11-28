@@ -2,9 +2,9 @@ import { body, param } from 'express-validator';
 import { handleValidationErrors } from '../error.validator.js';
 import User from '../../models/User.model.js';
 
-const checkEmailUnique = async (email) => {
+const checkEmailUnique = async (email, { req }) => {
   const existingUser = await User.findOne({ email });
-  if (existingUser) {
+  if (existingUser && existingUser._id.toString() !== req.user.id.toString()) {
     throw new Error('Email уже используется');
   }
   return true;
@@ -44,8 +44,10 @@ export const validateUserUpdate = [
     .trim()
     .notEmpty()
     .withMessage('Имя обязательно')
+    .bail()
     .isLength({ min: 2, max: 50 })
     .withMessage('Имя должно быть от 2 до 50 символов')
+    .bail()
     .matches(/^[a-zA-Zа-яА-ЯёЁ\s-]+$/)
     .withMessage('Имя может содержать только буквы, пробелы и дефисы'),
 
@@ -53,14 +55,18 @@ export const validateUserUpdate = [
     .trim()
     .notEmpty()
     .withMessage('Фамилия обязательна')
+    .bail()
     .isLength({ min: 2, max: 50 })
     .withMessage('Фамилия должна быть от 2 до 50 символов')
+    .bail()
     .matches(/^[a-zA-Zа-яА-ЯёЁ\s-]+$/)
     .withMessage('Фамилия может содержать только буквы, пробелы и дефисы'),
 
   body('patronymic')
+    .optional()
     .isLength({ min: 2, max: 50 })
     .withMessage('Отчество должно быть от 2 до 50 символов')
+    .bail()
     .matches(/^[a-zA-Zа-яА-ЯёЁ\s-]+$/)
     .withMessage('Отчество может содержать только буквы, пробелы и дефисы'),
 
@@ -119,6 +125,7 @@ export const validateUserUpdate = [
     .trim()
     .notEmpty()
     .withMessage('Должность обязательна')
+    .bail()
     .isLength({ max: 100 })
     .withMessage('Должность должна быть не более 100 символов'),
 
@@ -126,6 +133,7 @@ export const validateUserUpdate = [
     .trim()
     .notEmpty()
     .withMessage('Компания обязательна')
+    .bail()
     .isLength({ max: 100 })
     .withMessage('Компания должна быть не более 100 символов'),
 
@@ -133,6 +141,7 @@ export const validateUserUpdate = [
     .trim()
     .notEmpty()
     .withMessage('Период работы обязателен')
+    .bail()
     .isLength({ max: 50 })
     .withMessage('Период работы должен быть не более 50 символов'),
 
@@ -151,6 +160,7 @@ export const validateUserUpdate = [
     .trim()
     .notEmpty()
     .withMessage('Степень обязательна')
+    .bail()
     .isLength({ max: 100 })
     .withMessage('Степень должна быть не более 100 символов'),
 
@@ -158,6 +168,7 @@ export const validateUserUpdate = [
     .trim()
     .notEmpty()
     .withMessage('Направление обязательно')
+    .bail()
     .isLength({ max: 100 })
     .withMessage('Направление должно быть не более 100 символов'),
 
@@ -165,6 +176,7 @@ export const validateUserUpdate = [
     .trim()
     .notEmpty()
     .withMessage('Учебное заведение обязательно')
+    .bail()
     .isLength({ max: 100 })
     .withMessage('Учебное заведение должно быть не более 100 символов'),
 
@@ -191,6 +203,7 @@ export const validateUserUpdate = [
     .trim()
     .notEmpty()
     .withMessage('Язык обязателен')
+    .bail()
     .isLength({ max: 50 })
     .withMessage('Язык должен быть не более 50 символов'),
 
@@ -207,6 +220,7 @@ export const validateUserUpdate = [
     .trim()
     .notEmpty()
     .withMessage('Ссылка на проект обязательна')
+    .bail()
     .isURL()
     .withMessage('Ссылка на проект должна быть валидной'),
   
@@ -214,6 +228,7 @@ export const validateUserUpdate = [
     .trim()
     .notEmpty()
     .withMessage('Описание проекта обязательно')
+    .bail()
     .isLength({ max: 500 })
     .withMessage('Описание проекта должно быть не более 500 символов'),
 
@@ -226,6 +241,7 @@ export const validateUserUpdate = [
     .trim()
     .notEmpty()
     .withMessage('Название соцсети обязательно')
+    .bail()
     .isLength({ max: 50 })
     .withMessage('Название соцсети должно быть не более 50 символов'),
 
@@ -233,6 +249,7 @@ export const validateUserUpdate = [
     .trim()
     .notEmpty()
     .withMessage('Ссылка на соцсеть обязательна')
+    .bail()
     .isURL()
     .withMessage('Ссылка на соцсеть должна быть валидной'),
 
@@ -245,6 +262,7 @@ export const validateUserUpdate = [
     .trim()
     .notEmpty()
     .withMessage('Текст достижения обязателен')
+    .bail()
     .isLength({ max: 500 })
     .withMessage('Текст достижения должен быть не более 500 символов'),
 

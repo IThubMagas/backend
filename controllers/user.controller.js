@@ -281,7 +281,8 @@ export async function updateUserProfile(req, res) {
         const allowedFields = [
             'firstName', 'lastName', 'patronymic', 'phoneNumber', 'avatar',
             'contacts', 'workExperience', 'education', 'skills', 'industry',
-            'workFormat', 'employmentType', 'status', 'languages', 'isPublic'
+            'workFormat', 'employmentType', 'status', 'languages', 'isPublic',
+            'about', 'age', 'city', 'projects', 'socials', 'achievements', 
         ];
 
         // Фильтруем данные
