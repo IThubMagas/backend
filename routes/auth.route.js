@@ -1,6 +1,6 @@
 import { Router } from "express";
 import authController from "../controllers/auth.controller.js";
-import userController from "../controllers/user.controller.js"
+// import userController from "../controllers/user.controller.js"
 import upload from "../config/multer.js";
 import authMiddleware from "../middlewares/auth.middleware.js";
 import {
@@ -27,13 +27,13 @@ authRouter.post("/reset-password", authController.resetPassword);
 
 authRouter.put("/change-password", authMiddleware, authController.changePassword);
 authRouter.put("/change-email", authMiddleware, authController.changeEmail);
-authRouter.get("/profile", authMiddleware, userController.getUser);
+// authRouter.get("/profile", authMiddleware, userController.getUser);
 // authRouter.get(
 //   "/role/admin",
 //   authMiddleware,
 //   userController.getUsersRolesAdmin
 // );
-authRouter.get("/users", authMiddleware, userController.getUsers);
+// authRouter.get("/users", authMiddleware, userController.getUsers);
 // authRouter.get(
 //   "/role/student",
 //   authMiddleware,
