@@ -1,21 +1,19 @@
 import { Router } from "express";
 import authMiddleware from "../middlewares/auth.middleware.js";
-import { handleValidationErrors } from "../middlewares/error.validator.js";
 import { validateUserUpdate } from "../middlewares/validators/user.validator.js"
-import fileUpload from "../config/file-multer.js";
-import { getUsers, getUsersCount, getUser, updateUser, deleteUser, getUserProfile, updateUserProfile } from "../controllers/user.controller.js";
+import { handleValidationErrors } from "../middlewares/error.validator.js";
+import userController from "../controllers/user.controller.js";
 
 const userRouter = Router();
 
 // Публичные маршруты
-userRouter.get("/", getUsers);
-userRouter.get("/count", getUsersCount); //+
-userRouter.get("/:userId", getUser);
+userRouter.get("/", userController.getUsers);
+userRouter.get("/count", userController.getUsersCount);
+userRouter.get("/:userId", userController.getUser);
 
 // Защищенные маршруты (требуют аутентификации)
-userRouter.get("/profile/me", authMiddleware, getUserProfile); //+
-userRouter.patch("/profile/me", authMiddleware, fileUpload.array("achievementFiles", 10), validateUserUpdate, handleValidationErrors, updateUserProfile); //+
-userRouter.put("/:userId", authMiddleware, updateUser);
-userRouter.delete("/:userId", authMiddleware, deleteUser); //+
+userRouter.get("/profile/me", authMiddleware, userController.getUserProfile);
+userRouter.put("/profile/me", authMiddleware, validateUserUpdate, handleValidationErrors, userController.updateUserProfile);
+userRouter.delete("/:userId", authMiddleware, userController.deleteUser);
 
 export default userRouter;

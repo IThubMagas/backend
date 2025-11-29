@@ -59,6 +59,7 @@ export const validateRegistration = [
     .withMessage('Фамилия может содержать только буквы, пробелы и дефисы'),
 
   body('patronymic')
+    .optional()
     .isLength({ min: 2, max: 50 })
     .withMessage('Отчество должно быть от 2 до 50 символов')
     .matches(/^[a-zA-Zа-яА-ЯёЁ\s-]+$/)
