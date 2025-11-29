@@ -3,15 +3,15 @@ import User from "../models/User.model.js";
 /**
  * Получение списка пользователей с пагинацией и фильтрацией
  */
-export async function getUsers(req, res) {
+async function getUsers(req, res) {
     try {
-        // Получаем роли текущего пользователя и параметры запроса
-        const userRoles = req.user.roles;
+        // Получаем роли текущего пользователя с проверкой
+        const userRoles = req.user?.roles || []; 
         const { industry, workFormat, employmentType, status, search } = req.query;
 
         // Настройка пагинации с защитой от невалидных значений
         const page = Math.max(1, parseInt(req.query.page) || 1);
-        const limit = Math.min(Math.max(1, parseInt(req.query.limit) || 10), 100); // Ограничиваем максимум 100 записей
+        const limit = Math.min(Math.max(1, parseInt(req.query.limit) || 10), 100); // Ограничение максимум 100 записей
         const skip = (page - 1) * limit;
 
         // Базовый фильтр - показываем только публичные профили
@@ -90,10 +90,11 @@ export async function getUsers(req, res) {
     }
 }
 
+
 /**
  * Получение количества пользователей по фильтрам
  */
-export async function getUsersCount(req, res) {
+async function getUsersCount(req, res) {
     try {
         const { status, industry } = req.query;
         const filter = {
@@ -123,11 +124,11 @@ export async function getUsersCount(req, res) {
 /**
  * Получение профиля конкретного пользователя по ID
  */
-export async function getUser(req, res) {
+async function getUser(req, res) {
     try {
         const { userId } = req.params;
 
-        // Ищем пользователя, исключая чувствительные данные
+        // Поиск пользователя, исключая чувствительные данные
         const user = await User.findById(userId)
             .select('-password -emailVerificationCode -emailVerificationCodeExpires -passwordResetCode -passwordResetCodeExpires');
 
@@ -136,9 +137,9 @@ export async function getUser(req, res) {
         }
 
         // Проверяем права доступа
-        const currentUserId = req.user.id;
+        const currentUserId = req.user?.id; 
         const isOwner = currentUserId === userId;
-        const isAdmin = req.user.roles.includes('admin');
+        const isAdmin = req.user?.roles?.includes('admin'); 
 
         // Если профиль не публичный, доступ есть только владельцу или админу
         if (!user.isPublic && !isOwner && !isAdmin) {
@@ -152,73 +153,11 @@ export async function getUser(req, res) {
     }
 }
 
-/**
- * Обновление данных пользователя
- */
-export async function updateUser(req, res) {
-    try {
-        const { id } = req.user;
-        const { userId } = req.params;
-        const data = req.body;
-
-        // Проверяем права на редактирование: либо свой профиль, либо админ
-        if (id !== userId && !req.user.roles.includes('admin')) {
-            return res.status(403).json({ message: "У вас нет доступа для редактирования этого профиля" });
-        }
-
-        const user = await User.findById(userId);
-        if (!user) {
-            return res.status(404).json({ message: "Пользователь не найден" });
-        }
-
-        // Белый список разрешенных для обновления полей
-        const allowedFields = [
-            'firstName', 'lastName', 'patronymic', 'phoneNumber', 'avatar',
-            'contacts', 'workExperience', 'education', 'skills', 'industry',
-            'workFormat', 'employmentType', 'status', 'languages', 'isPublic'
-        ];
-
-        // Фильтруем данные, оставляя только разрешенные поля
-        const updateData = {};
-        allowedFields.forEach(field => {
-            if (data[field] !== undefined) {
-                updateData[field] = data[field];
-            }
-        });
-
-        // Особенная логика для контактов: мержим существующие с новыми
-        if (data.contacts) {
-            updateData.contacts = { ...user.contacts, ...data.contacts };
-        }
-
-        // Обновляем пользователя с валидацией
-        const updatedUser = await User.findByIdAndUpdate(
-            userId,
-            { $set: updateData },
-            { new: true, runValidators: true }
-        ).select('-password -emailVerificationCode -emailVerificationCodeExpires -passwordResetCode -passwordResetCodeExpires');
-
-        res.status(200).json({
-            message: "Пользователь был успешно обновлён",
-            user: updatedUser
-        });
-    } catch (error) {
-        // Обработка специфических ошибок MongoDB
-        if (error.name === 'ValidationError') {
-            return res.status(400).json({ message: "Ошибка валидации данных", error: error.message });
-        }
-        if (error.code === 11000) {
-            return res.status(400).json({ message: "Пользователь с таким email или номером телефона уже существует" });
-        }
-        res.status(500).json({ message: "Не удалось обновить пользователя" });
-        console.error(error);
-    }
-}
 
 /**
  * Удаление пользователя
  */
-export async function deleteUser(req, res) {
+async function deleteUser(req, res) {
     try {
         const { id } = req.user;
         const { userId } = req.params;
@@ -245,7 +184,7 @@ export async function deleteUser(req, res) {
 /**
  * Получение профиля текущего авторизованного пользователя
  */
-export async function getUserProfile(req, res) {
+async function getUserProfile(req, res) {
     try {
         const userId = req.user.id;
 
@@ -267,7 +206,7 @@ export async function getUserProfile(req, res) {
 /**
  * Обновление профиля текущего авторизованного пользователя
  */
-export async function updateUserProfile(req, res) {
+async function updateUserProfile(req, res) {
     try {
         const userId = req.user.id;
         const data = req.body;
@@ -320,3 +259,12 @@ export async function updateUserProfile(req, res) {
         console.error(error);
     }
 }
+
+export default {
+    getUsers,
+    getUsersCount,
+    getUser,
+    deleteUser,
+    getUserProfile,
+    updateUserProfile
+};
