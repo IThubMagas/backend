@@ -1,25 +1,19 @@
 import User from "../models/User.model.js";
 
-/**
- * Получение списка пользователей с пагинацией и фильтрацией
- */
+// Получение списка пользователей с пагинацией и фильтрацией
 async function getUsers(req, res) {
     try {
-        // Получаем роли текущего пользователя с проверкой
         const userRoles = req.user?.roles || []; 
         const { industry, workFormat, employmentType, status, search } = req.query;
 
-        // Настройка пагинации с защитой от невалидных значений
         const page = Math.max(1, parseInt(req.query.page) || 1);
         const limit = Math.min(Math.max(1, parseInt(req.query.limit) || 10), 100); // Ограничение максимум 100 записей
         const skip = (page - 1) * limit;
 
-        // Базовый фильтр - показываем только публичные профили
         const filter = {
             isPublic: true
         };
 
-        // Фильтрация по ролям: админы могут фильтровать по любой роли, остальные видят только студентов
         if (userRoles.includes("admin")) {
             if (req.query.role) {
                 filter.roles = req.query.role;
@@ -28,7 +22,6 @@ async function getUsers(req, res) {
             filter.roles = "student";
         }
 
-        // Поиск по имени, фамилии или email (регистронезависимый)
         if (search) {
             filter.$or = [
                 { firstName: { $regex: search, $options: 'i' } },
@@ -37,31 +30,26 @@ async function getUsers(req, res) {
             ];
         }
 
-        // Фильтрация по отраслям (может быть несколько значений через запятую)
         if (industry) {
             const industries = industry.split(',').map(ind => ind.trim());
             filter.industry = { $in: industries };
         }
 
-        // Фильтрация по формату работы
         if (workFormat) {
             const workFormats = workFormat.split(',').map(format => format.trim());
             filter.workFormat = { $in: workFormats };
         }
 
-        // Фильтрация по типу занятости
         if (employmentType) {
             const employmentTypes = employmentType.split(',').map(type => type.trim());
             filter.employmentType = { $in: employmentTypes };
         }
 
-        // Фильтрация по статусу
         if (status) {
             const statuses = status.split(',').map(s => s.trim());
             filter.status = { $in: statuses };
         }
 
-        // Параллельное выполнение запросов для получения данных и общего количества
         const [users, total] = await Promise.all([
             User.find(filter)
                 .skip(skip)
@@ -70,7 +58,6 @@ async function getUsers(req, res) {
             User.countDocuments(filter)
         ]);
 
-        // Расчет данных для пагинации
         const totalPages = Math.ceil(total / limit);
 
         res.status(200).json({
@@ -91,9 +78,7 @@ async function getUsers(req, res) {
 }
 
 
-/**
- * Получение количества пользователей по фильтрам
- */
+// Получение количества пользователей по фильтрам
 async function getUsersCount(req, res) {
     try {
         const { status, industry } = req.query;
@@ -101,13 +86,11 @@ async function getUsersCount(req, res) {
             isPublic: true
         };
 
-        // Фильтрация по статусу
         if (status) {
             const statuses = status.split(',').map(s => s.trim());
             filter.status = { $in: statuses };
         }
 
-        // Фильтрация по отраслям
         if (industry) {
             const industries = industry.split(',').map(ind => ind.trim());
             filter.industry = { $in: industries };
@@ -121,14 +104,11 @@ async function getUsersCount(req, res) {
     }
 }
 
-/**
- * Получение профиля конкретного пользователя по ID
- */
+// Получение профиля конкретного пользователя по ID
 async function getUser(req, res) {
     try {
         const { userId } = req.params;
 
-        // Поиск пользователя, исключая чувствительные данные
         const user = await User.findById(userId)
             .select('-password -emailVerificationCode -emailVerificationCodeExpires -passwordResetCode -passwordResetCodeExpires');
 
@@ -136,12 +116,10 @@ async function getUser(req, res) {
             return res.status(404).json({ message: "Пользователь не найден" });
         }
 
-        // Проверяем права доступа
         const currentUserId = req.user?.id; 
         const isOwner = currentUserId === userId;
         const isAdmin = req.user?.roles?.includes('admin'); 
 
-        // Если профиль не публичный, доступ есть только владельцу или админу
         if (!user.isPublic && !isOwner && !isAdmin) {
             return res.status(403).json({ message: "У вас нет доступа к этому профилю" });
         }
@@ -154,15 +132,12 @@ async function getUser(req, res) {
 }
 
 
-/**
- * Удаление пользователя
- */
+// Удаление пользователя
 async function deleteUser(req, res) {
     try {
         const { id } = req.user;
         const { userId } = req.params;
 
-        // Проверяем права на удаление: либо свой профиль, либо админ
         if (id !== userId && !req.user.roles.includes('admin')) {
             return res.status(403).json({ message: "У вас нет доступа для удаления этого профиля" });
         }
@@ -181,14 +156,11 @@ async function deleteUser(req, res) {
     }
 }
 
-/**
- * Получение профиля текущего авторизованного пользователя
- */
+// Получение профиля текущего авторизованного пользователя
 async function getUserProfile(req, res) {
     try {
         const userId = req.user.id;
 
-        // Получаем полные данные текущего пользователя (кроме чувствительных)
         const user = await User.findById(userId)
             .select('-password -emailVerificationCode -emailVerificationCodeExpires -passwordResetCode -passwordResetCodeExpires');
 
@@ -203,9 +175,7 @@ async function getUserProfile(req, res) {
     }
 }
 
-/**
- * Обновление профиля текущего авторизованного пользователя
- */
+// Обновление профиля текущего авторизованного пользователя
 async function updateUserProfile(req, res) {
     try {
         const userId = req.user.id;
@@ -216,14 +186,13 @@ async function updateUserProfile(req, res) {
             return res.status(404).json({ message: "Пользователь не найден" });
         }
 
-        // Белый список разрешенных полей (аналогично updateUser)
         const allowedFields = [
-            'firstName', 'lastName', 'patronymic', 'phoneNumber', 'avatar',
+            'firstName', 'lastName', 'patronymic', 'email', 'phoneNumber', 'avatar',
             'contacts', 'workExperience', 'education', 'skills', 'industry',
-            'workFormat', 'employmentType', 'status', 'languages', 'isPublic'
+            'workFormat', 'employmentType', 'status', 'languages', 'isPublic',
+            'about', 'age', 'city', 'projects', 'socials', 'achievements', 
         ];
 
-        // Фильтруем данные
         const updateData = {};
         allowedFields.forEach(field => {
             if (data[field] !== undefined) {
@@ -231,12 +200,10 @@ async function updateUserProfile(req, res) {
             }
         });
 
-        // Особенная логика для контактов
         if (data.contacts) {
             updateData.contacts = { ...user.contacts, ...data.contacts };
         }
 
-        // Обновляем профиль
         const updatedUser = await User.findByIdAndUpdate(
             userId,
             { $set: updateData },
@@ -248,7 +215,6 @@ async function updateUserProfile(req, res) {
             user: updatedUser
         });
     } catch (error) {
-        // Обработка ошибок валидации и дубликатов
         if (error.name === 'ValidationError') {
             return res.status(400).json({ message: "Ошибка валидации данных", error: error.message });
         }
