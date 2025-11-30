@@ -200,6 +200,51 @@ async function updateUserProfile(req, res) {
             }
         });
 
+        let achievementsData = [];
+
+        if (data.achievements) {
+            if (typeof data.achievements === 'string') {
+                try {
+                    achievementsData = JSON.parse(data.achievements);
+                } catch (error) {
+                    console.error('Ошибка парсинга achievements:', error);
+                    achievementsData = [];
+                }
+            } else if (Array.isArray(data.achievements)) {
+                achievementsData = data.achievements;
+            }
+        }
+
+        if (req.files && req.files.length > 0) {
+            req.files.forEach((file, index) => {
+                if (achievementsData[index]) {
+                    achievementsData[index] = {
+                        ...achievementsData[index],
+                        file: file.filename || file.originalname,
+                        text: achievementsData[index].description || achievementsData[index].title || 'Достижение'
+                    };
+                } else {
+                    achievementsData.push({
+                        title: `Достижение ${index + 1}`,
+                        description: '',
+                        date: new Date().toISOString().split('T')[0],
+                        file: file.filename || file.originalname,
+                        text: 'Достижение',
+                        fileName: file.originalname,
+                        fileSize: file.size,
+                        mimeType: file.mimetype
+                    });
+                }
+            });
+        }
+
+        achievementsData = achievementsData.map((achievement, index) => ({
+            title: achievement.title || `Достижение ${index + 1}`,
+            file: achievement.file || 'default_file'
+        }));
+
+        updateData.achievements = achievementsData;
+
         if (data.contacts) {
             updateData.contacts = { ...user.contacts, ...data.contacts };
         }

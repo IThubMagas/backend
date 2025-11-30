@@ -8,6 +8,7 @@ const WorkExperienceSchema = new Schema({
 }, { _id: false });
 
 const ProjectSchema = new Schema({
+  title: { type: String, required: true },
   link: { type: String, required: true },
   description: { type: String, required: true },
 }, { _id: false });
