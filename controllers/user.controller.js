@@ -1,4 +1,24 @@
 import User from "../models/User.model.js";
+import fs from 'fs/promises';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import bcrypt from "bcrypt";
+
+async function deleteFile(filePath) {
+    try {
+        await fs.unlink(filePath);
+        console.log('Файл удален:', filePath);
+        return true;
+    } catch (err) {
+        // Если файла не существует, это нормально
+        if (err.code === 'ENOENT') {
+            console.log('Файл не найден, возможно уже удален:', filePath);
+        } else {
+            console.warn('Ошибка при удалении файла:', err.message);
+        }
+        return false;
+    }
+}
 
 // Получение списка пользователей с пагинацией и фильтрацией
 async function getUsers(req, res) {
@@ -186,6 +206,10 @@ async function updateUserProfile(req, res) {
             return res.status(404).json({ message: "Пользователь не найден" });
         }
 
+        console.log('req.files:', req.files);
+        console.log('req.body.avatar:', data.avatar);
+        console.log('Тип req.body.avatar:', typeof data.avatar);
+
         const allowedFields = [
             'firstName', 'lastName', 'patronymic', 'email', 'phoneNumber', 'avatar',
             'contacts', 'workExperience', 'education', 'skills', 'industry',
@@ -200,15 +224,129 @@ async function updateUserProfile(req, res) {
             }
         });
 
+        if (data.avatar !== undefined) {
+            const shouldDeleteAvatar = 
+                data.avatar === 'DELETE_AVATAR' || 
+                data.avatar === 'null' ||
+                data.avatar === '' || 
+                data.avatar === 'undefined' ||
+                data.avatar === null;
+            
+            if (shouldDeleteAvatar) {
+                if (user.avatar) {
+                    const avatarPath = path.join('uploads/avatars', user.avatar);
+                    await deleteFile(avatarPath);
+                }
+                
+                updateData.avatar = null;
+                console.log('Аватар удален из профиля');
+            }
+            else if (typeof data.avatar === 'string' && data.avatar !== 'undefined') {
+                if (!data.avatar.startsWith('data:') && !data.avatar.includes('base64')) {
+                    updateData.avatar = data.avatar;
+                    console.log('Аватар сохранен (имя файла):', data.avatar);
+                }
+            }
+        }
+
+        if (req.files?.avatar && req.files.avatar[0]) {
+            const avatarFile = req.files.avatar[0];
+
+            if (user.avatar) {
+                const oldAvatarPath = path.join('uploads/avatars', user.avatar);
+                await deleteFile(oldAvatarPath);
+            }
+            
+            updateData.avatar = avatarFile.filename || avatarFile.originalname;
+            console.log('Новый аватар сохранен:', updateData.avatar);
+        }
+
+        let achievementsData = [];
+
+        if (data.achievements && Array.isArray(data.achievements)) {
+            achievementsData = data.achievements;
+        }
+
+        if (req.files?.achievementFiles && req.files.achievementFiles.length > 0) {
+            const achievementFiles = req.files.achievementFiles;
+            
+            achievementFiles.forEach((file) => {
+                const filename = file.filename || file.originalname;
+
+                let fileAssigned = false;
+                
+                for (let i = 0; i < achievementsData.length; i++) {
+                    if (!achievementsData[i].file || 
+                        achievementsData[i].file === 'undefined' || 
+                        achievementsData[i].file === 'null' ||
+                        achievementsData[i].file === '') {
+                        achievementsData[i].file = filename;
+                        fileAssigned = true;
+                        console.log(`Файл ${filename} привязан к достижению ${i}: ${achievementsData[i].text}`);
+                        break;
+                    }
+                }
+
+                if (!fileAssigned) {
+                    achievementsData.push({
+                        text: `Достижение ${achievementsData.length + 1}`,
+                        file: filename
+                    });
+                    console.log(`Создано новое достижение с файлом ${filename}`);
+                }
+            });
+        }
+
+        achievementsData = achievementsData
+            .filter(achievement => {
+                if (!achievement.text || achievement.text.trim() === '') {
+                    return false;
+                }
+                return true;
+            })
+            .map(achievement => ({
+                text: achievement.text || 'Достижение',
+                file: (achievement.file && 
+                       achievement.file !== 'undefined' && 
+                       achievement.file !== 'null' &&
+                       achievement.file !== '') ? achievement.file : null
+            }));
+
+        console.log('Итоговые достижения:', achievementsData);
+        updateData.achievements = achievementsData;
+
         if (data.contacts) {
             updateData.contacts = { ...user.contacts, ...data.contacts };
         }
+
+        if (data.newPassword) {
+            if (!data.currentPassword) {
+              return res.status(400).json(
+                { message: 'Текущий пароль обязателен для смены пароля' },
+              );
+            }
+      
+            // Проверяем текущий пароль
+            const isCurrentPasswordValid = await bcrypt.compare(
+              data.currentPassword, 
+              user.password
+            );
+      
+            if (!isCurrentPasswordValid) {
+              return res.status(400).json(
+                { message: 'Текущий пароль неверен' },
+              );
+            }
+      
+            // Хешируем новый пароль
+            updateData.password = await bcrypt.hash(data.newPassword, 10);
+          }
 
         const updatedUser = await User.findByIdAndUpdate(
             userId,
             { $set: updateData },
             { new: true, runValidators: true }
-        ).select('-password -emailVerificationCode -emailVerificationCodeExpires -passwordResetCode -passwordResetCodeExpires');
+        ).select('-emailVerificationCode -emailVerificationCodeExpires -passwordResetCode -passwordResetCodeExpires');
 
         res.status(200).json({
             message: "Профиль успешно обновлён",
@@ -216,13 +354,18 @@ async function updateUserProfile(req, res) {
         });
     } catch (error) {
         if (error.name === 'ValidationError') {
-            return res.status(400).json({ message: "Ошибка валидации данных", error: error.message });
+            console.error('Ошибка валидации:', error.errors);
+            return res.status(400).json({ 
+                message: "Ошибка валидации данных", 
+                error: error.message,
+                details: error.errors 
+            });
         }
         if (error.code === 11000) {
             return res.status(400).json({ message: "Пользователь с таким email или номером телефона уже существует" });
         }
+        console.error('Ошибка при обновлении профиля:', error);
         res.status(500).json({ message: "Не удалось обновить профиль" });
-        console.error(error);
     }
 }
 

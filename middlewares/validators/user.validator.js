@@ -10,12 +10,12 @@ const checkEmailUnique = async (email, { req }) => {
   return true;
 };
 
-const checkPhoneUnique = async (phoneNumber) => {
+const checkPhoneUnique = async (phoneNumber, { req }) => {
   if (!phoneNumber) return true;
   
   const existingUser = await User.findOne({ phoneNumber });
-  if (existingUser) {
-    throw new Error('Номер телефона уже используется');
+  if (existingUser && existingUser._id.toString() !== req.user.id.toString()) {
+    throw new Error('Email уже используется');
   }
   return true;
 };
@@ -40,6 +40,13 @@ const validatePhoneFormat = (value) => {
 };
 
 export const validateUserUpdate = [
+  body('*').customSanitizer(value => {
+    if (value === 'undefined' || value === 'null' || value === '') {
+      return undefined;
+    }
+    return value;
+  }),
+
   body('firstName')
     .trim()
     .notEmpty()
@@ -101,8 +108,8 @@ export const validateUserUpdate = [
   body('contacts.linkedin')
     .optional()
     .trim()
-    .isURL()
-    .withMessage('LinkedIn должен быть валидной ссылкой'),
+    .isLength({ min: 2, max: 100 })
+    .withMessage('LinkedIn должен быть от 2 до 100 символов'),
 
   body('contacts.telegram')
     .optional()
@@ -113,8 +120,8 @@ export const validateUserUpdate = [
   body('contacts.github')
     .optional()
     .trim()
-    .isURL()
-    .withMessage('GitHub должен быть валидной ссылкой'),
+    .isLength({ min: 2, max: 100 })
+    .withMessage('GitHub должен быть от 2 до 100 символов'),
 
   body('workExperience')
     .optional()
@@ -215,6 +222,14 @@ export const validateUserUpdate = [
     .optional()
     .isArray()
     .withMessage('Проекты должны быть массивом'),
+  
+  body('projects.*.title')
+    .trim()
+    .notEmpty()
+    .withMessage('Название проекта обязателено')
+    .bail()
+    .isLength({ min: 2, max: 100 })
+    .withMessage('Название проекта должно быть от 2 до 100 символов'),
   
   body('projects.*.link')
     .trim()
