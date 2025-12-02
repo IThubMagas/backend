@@ -202,6 +202,8 @@ async function updateUserProfile(req, res) {
 
         let achievementsData = [];
 
+        console.log(data);
+
         if (data.achievements) {
             if (typeof data.achievements === 'string') {
                 try {
@@ -221,26 +223,20 @@ async function updateUserProfile(req, res) {
                     achievementsData[index] = {
                         ...achievementsData[index],
                         file: file.filename || file.originalname,
-                        text: achievementsData[index].description || achievementsData[index].title || 'Достижение'
+                        text: achievementsData[index].text
                     };
                 } else {
                     achievementsData.push({
-                        title: `Достижение ${index + 1}`,
-                        description: '',
-                        date: new Date().toISOString().split('T')[0],
                         file: file.filename || file.originalname,
                         text: 'Достижение',
-                        fileName: file.originalname,
-                        fileSize: file.size,
-                        mimeType: file.mimetype
                     });
                 }
             });
         }
 
         achievementsData = achievementsData.map((achievement, index) => ({
-            title: achievement.title || `Достижение ${index + 1}`,
-            file: achievement.file || 'default_file'
+            text: achievement.text,
+            file: achievement.file
         }));
 
         updateData.achievements = achievementsData;
