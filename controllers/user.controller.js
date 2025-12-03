@@ -74,7 +74,7 @@ async function getUsers(req, res) {
             User.find(filter)
                 .skip(skip)
                 .limit(limit)
-                .select('firstName lastName patronymic avatar email contacts roles industry workFormat employmentType status skills workExperience education'),
+                .select('firstName lastName patronymic avatar email contacts roles industry workFormat employmentType status skills workExperience education projects'),
             User.countDocuments(filter)
         ]);
 
