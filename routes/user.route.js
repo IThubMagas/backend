@@ -3,8 +3,6 @@ import authMiddleware from "../middlewares/auth.middleware.js";
 import { validateUserUpdate } from "../middlewares/validators/user.validator.js"
 import { handleValidationErrors } from "../middlewares/error.validator.js";
 import userController from "../controllers/user.controller.js";
-import fileUpload from "../config/file-multer.js";
-import upload from "../config/multer.js";
 import multiUpload from "../config/multiUpload.js"
 
 const userRouter = Router();
